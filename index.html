@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>CS196-26 Project 2</h1>
+
+<h2>Part 1.1: Finite Difference Operator</h2>
+<p>This part involves performing edge detection on this picture of a camera man.</p>
+<img src='cameraman.png' width='350' height='350'>
+
+<p>The gradient magnitude of the image is computed as follows: first compute the partial derivative in x of the image by convolving it with [[1, -1]], then the partial derivative in y by convolving with [[1],[-1]]. Then compute the gradient magnitude = sqrt(dx^2 + dy^2).</p>
+
+<h3>Derivative in x direction:</h3>
+<img src='df_dx.png' width='350' height='350'>
+<h3>Derivative in y direction:</h3>
+<img src='df_dy.png' width='350' height='350'>
+<h3>Gradient magnitude image:</h3>
+<img src='grad_mag_img.png' width='350' height='350'>
+
+<p>We can also binarize the gradient magnitude image using an experimentally chosen threshold to try to reduce the noise and while keeping the edges. Here the edge image is binarized with a threshold of 0.2.</p>
+<h3>Binarized gradient magnitude image:</h3>
+<img src='bin_grad_mag_img.png' width='350' height='350'>
+
+<h2>Part 1.2: Derivative of Gaussian (DoG) Filter</h2>
+<p>In this part we explore the effect that blurring has on edge detection for an image, and show the commutative property of convolution by showing that the binarized magnitude image produced by blurring using a Gaussian then taking the derivative is the same as the one produced by convolving an image with a DoG (convolution of a gaussian and D_x/D_y). DoG's can be reused for many images and only need to be computed once!</p>
+<p>The main difference here is that the lines are a lot thicker and there is less noise. This is becuase the gaussian filter blurred the photo and made some of the surrounding pixels take on values that are similar to the actual edge pixels. Similarly, noise is smoothed out since those pixels take on values closer to non-edge pixels. </p>
+<p>The gaussian filter is 9x9 with sigma = 2 for the following. The binarization threshold is 0.05.</p>
+<h3>Binarized edge image produced by blurring with Gaussian, then repeating the process in part 1.1: </h3>
+<img src='bin_blur_then_conv.png' width='350' height='350'>
+<h3>Binarized edge image produced by convolving directly with a DoG:</h3>
+<img src='bin_conv_then_blur.png' width='350' height='350'>
+<p>As expected, the results are the same. Below are the DoGs visualized.</p>
+<h3>DoG_x:</h3>
+<img src='DoG_x.png' width='400' height='360'>
+<h3>DoG_y:</h3>
+<img src='DoG_y.png' width='360' height='400'>
+
+<h2>Part 1.3: Image Straightening</h2>
+<p>In this part we create an image straightener that works by rotating an image such that the number of vertical and horizontal edges are maximized. First I crop each image by a fixed amount such that when they are rotated at the most extreme angle the border lines that result from the rotation are removed. Then for each angle I rotate the image by that angle, calculate df_dx and df_dy, calculate the angles for each pixel in the image by doing np.arctan2(df_dy, df_dx), convert to degrees, then check how many of the angles are within a certain range (+/- 0.2) of the following degrees: -180, -90, 0, 90, 180. The rotation with the maximum number of such images is picked as the straightened image.</p>
+<p>I tried angles from -20 to 20 in increments of 2, G(9, 2). </p>
+
+<h3>facade:</h3>
+<img src='facade.jpg' width='350' height='300'>
+<h3>facade angle histogram:</h3>
+<img src='facade_orig_hist.jpg'>
+<h3>straightened facade:</h3>
+<img src='facade_straightened.jpg' width='350' height='300'>
+<h3>straightened facade angle histogram:</h3>
+<img src='facade_straightened_hist.jpg'>
+
+<h3>pisa:</h3>
+<img src='pisa.jpg'>
+<h3>pisa angle histogram:</h3>
+<img src='pisa_orig_hist.jpg'>
+<h3>straightened pisa:</h3>
+<img src='pisa_straightened.jpg'>
+<h3>straightened pisa angle histogram:</h3>
+<img src='pisa_straightened_hist.jpg'>
+
+<h3>house:</h3>
+<img src='house.jpg'>
+<h3>house angle histogram:</h3>
+<img src='house_orig_hist.jpg'>
+<h3>straightened house:</h3>
+<img src='house_straightened.jpg'>
+<h3>straightened house angle histogram:</h3>
+<img src='house_straightened_hist.jpg'>
+
+<h3>leaninghouse:</h3>
+<img src='leaninghouse.jpg'>
+<h3>leaninghouse angle histogram:</h3>
+<img src='leaninghouse_orig_hist.jpg'>
+<h3>straightened leaninghouse:</h3>
+<img src='leaninghouse_straightened.jpg'>
+<h3>straightened leaninghouse angle histogram:</h3>
+<img src='leaninghouse_straightened_hist.jpg'>
+<p>This last case failed to straighten the tilted house. Interestingly, the final rotation angle computed was 0. This may be due to the other straight lines/edges in the picture such as the pattern on the house and the windows that are not parallel or perpendicular to the outline/shape of the house itself.</p>
+
+<h2>Part 2.1: Image "Sharpening"</h2>
+<p>In this part we "sharpen" an image by adding the high frequencies to the image, essentially making it look sharper without using any additional information. The high frequencies are obtained by subtracting the low frequencies (blurred image) from the original image and then added to the original image to make it appear sharper.</p>
+
+<h3>taj:</h3>
+<img src='taj.jpg'>
+<h3>sharpened taj:</h3>
+<img src='taj_sharpened.jpg'>
+
+<h3>horse:</h3>
+<img src='horse.jpeg'>
+<h3>sharpened horse:</h3>
+<img src='horse._sharpened.jpg'>
+
+<p>Here we blur an image before sharpening just for comparison. The final sharpened image is sharper than the blurred version, but still less sharp than the original.</p>
+<h3>flowers:</h3>
+<img src='flowers.jpg'>
+<h3>blurred flowers:</h3>
+<img src='flowers_blurred.jpg'>
+<h3>sharpened flowers:</h3>
+<img src='flowers_blurred_then_sharpened.jpg'>
+
+<h2>Part 2.2: Hybrid Images</h2>
+<p>We can create hybrid images that look like one image up close and another from far away. This is done by first aligning the images, then taking the high frequencies from one image and overlaying it on top of the low frequencies of another image using methods discussed in previous parts. The high frequency image is seen up close while the low frequency image is seen from far away.</p>
+
+<h3>derek:</h3>
+<img src='DerekPicture.jpg'>
+<h3>nutmeg:</h3>
+<img src='nutmeg.jpg'>
+<h3>derek/nutmeg hybrid:</h3>
+<img src='derek_nutmeg_hybrid.jpg'>
+
+<h3>voltorb:</h3>
+<img src='voltorb.jpg'>
+<h3>electrode:</h3>
+<img src='electrode.jpg'>
+<h3>voltorb/electrode hybrid:</h3>
+<img src='voltorb_electrode_hybrid.jpg'>
+<h3>voltorb/electrode fourier analysis:</h3>
+<h4>voltorb:</h4>
+<img src='voltorb_logft.jpg'>
+<h4>electrode:</h4>
+<img src='electrode_logft.jpg'>
+<h4>low pass voltorb:</h4>
+<img src='lp_voltorb_logft.jpg'>
+<h4>high pass electrode:</h4>
+<img src='hp_electrode_logft.jpg'>
+<h4>voltorb/electrode hybrid:</h4>
+<img src='hybrid_logft.jpg'>
+
+<h3>happy stock photo man:</h3>
+<img src='happy.jpg'>
+<h3>sad stock photo man:</h3>
+<img src='sad.jpg'>
+<h3>happy/sad hybrid:</h3>
+<img src='happy_sad_hybrid.jpg'>
+
+<h3>usagi (from the sailor moon series):</h3>
+<img src='usagi.jpg'>
+<h3>luna (also from the sailor moon series):</h3>
+<img src='luna.jpg'>
+<h3>usagi/luna hybrid:</h3>
+<img src='usagi_luna_hybrid.jpg'>
+<p>The hybrid above is a failure case since usagi and luna don't have similar face shapes and it's quite obvious usagi is overlaying way past the borders of luna's face. Although if your eyesight is as bad as mine, it's quite possible that only usagi is still visible from far away :')</p>
+
+<h2>Part 2.3: Gaussian and Laplacian Stacks</h2>
+<p>Here we create Gaussian and Laplacian stacks, which are like the pyramids except with no downsampling \o/ The Gaussian layers are made by repeatedly blurring the original image, and the Laplacian layers are made by taking the difference between the successive Gaussian layers.</p>
+<h3>Gaussian stack of lincoln:</h3>
+<img src='lincoln.jpg'>
+<img src='lincoln_g0.jpg'>
+<img src='lincoln_g1.jpg'>
+<img src='lincoln_g2.jpg'>
+<img src='lincoln_g3.jpg'>
+<img src='lincoln_g4.jpg'>
+<h3>Laplacian stack of lincoln:</h3>
+<img src='lincoln_l0.jpg'>
+<img src='lincoln_l1.jpg'>
+<img src='lincoln_l2.jpg'>
+<img src='lincoln_l3.jpg'>
+<img src='lincoln_l4.jpg'>
+
+<h3>Gaussian stack of voltorb/electrode hybrid:</h3>
+<img src='voltorb_electrode_hybrid.jpg'>
+<img src='hybrid_g0.jpg'>
+<img src='hybrid_g1.jpg'>
+<img src='hybrid_g2.jpg'>
+<img src='hybrid_g3.jpg'>
+<img src='hybrid_g4.jpg'>
+<h3>Laplacian stack of voltorb/electrode hybrid:</h3>
+<img src='hybrid_l0.jpg'>
+<img src='hybrid_l1.jpg'>
+<img src='hybrid_l2.jpg'>
+<img src='hybrid_l3.jpg'>
+<img src='hybrid_l4.jpg'>
+
+<h2>Part 2.4: Multiresolution Blending</h2>
+<p>We can also blend two images A and B together seamlessly with mask M using the stacks described in 2.3! The computation is as follows: build laplacian stacks LA and LB for images A and B respectively, build a gaussian stack GM for the mask M, form a pyramid LS where for each level i LS(i) = LA(i)*GM(i) + LB(i)*(1 - GM(i)), then obtain the final splined image by summing the levels of LS. </p>
+<p>Note that we must add an extra layer to the laplacian stacks that is the same as the last level of the corresponding gaussian stack so that you can get back the original image through summing.</p>
+<p>I first tested using the apple/orange example given, then generated the new splines below.</p>
+
+<h3>pokeball:</h3>
+<img src='pokeball.jpg'>
+<h3>greatball:</h3>
+<img src='greatball.png'>
+<h3>pokeball/greatball spline:</h3>
+<img src='pokeball_greatball_spline.jpg'>
+
+<h3>galaxy:</h3>
+<img src='galaxy.jpg'>
+<h3>cat:</h3>
+<img src='blep.jpg'>
+<h3>galaxycat spline:</h3>
+<img src='galaxy_blep_spline.jpg'>
+
+<h3>Stacks necessary for the galaxycat spline:</h3>
+<h4>galaxy laplacian: </h4>
+<img src='galaxy_l0.jpg'>
+<img src='galaxy_l1.jpg'>
+<img src='galaxy_l2.jpg'>
+<img src='galaxy_l3.jpg'>
+<img src='galaxy_l4.jpg'>
+<img src='galaxy_l5.jpg'>
+<h4>cat laplacian: </h4>
+<img src='blep_l0.jpg'>
+<img src='blep_l1.jpg'>
+<img src='blep_l2.jpg'>
+<img src='blep_l3.jpg'>
+<img src='blep_l4.jpg'>
+<img src='blep_l5.jpg'>
+<h4>mask gaussian: </h4>
+<img src='mask2_g0.jpg'>
+<img src='mask2_g1.jpg'>
+<img src='mask2_g2.jpg'>
+<img src='mask2_g3.jpg'>
+<img src='mask2_g4.jpg'>
+<img src='mask2_g5.jpg'>
+<h4>merged stack: </h4>
+<img src='galaxy_blep_LS0.jpg'>
+<img src='galaxy_blep_LS1.jpg'>
+<img src='galaxy_blep_LS2.jpg'>
+<img src='galaxy_blep_LS3.jpg'>
+<img src='galaxy_blep_LS4.jpg'>
+<img src='galaxy_blep_LS5.jpg'>
+
+<p>I learned that there's actually a lot of image manipulation and practical applications in image processing that can be done simply by using the basic ideas of convolution and filtering! Also, a lot of things can be done using a Gaussian filter. </p>
+
+</body>
+</html>
